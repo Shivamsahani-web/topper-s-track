@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Topper's Track</title>
+<meta name="theme-color" content="#0B0B14" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/icon.png" type="image/png" />
+<link rel="apple-touch-icon" href="/icon.png" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+  :root {
+    --bg: #0B0B14;
+    --card: #14141F;
+    --border: #262636;
+    --ink: #F1EFFA;
+    --muted: #8B88A3;
+    --gold: #D4A24C;
+    --gold2: #F0C878;
+    --navy: #1E3A5F;
+    --ok: #22C55E;
+    --err: #F87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Inter', sans-serif; padding-bottom: 60px;
+  }
+  .display { font-family: 'Poppins', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .wrap { max-width: 580px; margin: 0 auto; padding: 0 18px; }
+  .grad-text {
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .btn-primary {
+    width: 100%; padding: 15px 18px; border-radius: 13px; border: none;
+    background: linear-gradient(90deg, var(--gold), var(--gold2)); color: #14141F; font-weight: 800; font-size: 14.5px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 12px 16px; border-radius: 12px; border: 1.5px solid var(--border); background: transparent;
+    color: var(--ink); font-weight: 600; font-size: 13.5px; cursor: pointer;
+  }
+  .chip {
+    padding: 8px 13px; border-radius: 999px; border: 1.5px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .chip.active { border-color: transparent; background: linear-gradient(90deg, var(--gold), var(--gold2)); color: #14141F; }
+  .slot-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px;
+    background: var(--card); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer;
+  }
+  .slot-thumb {
+    width: 52px; height: 52px; border-radius: 10px; background: #0F0F1A; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 20px; color: var(--muted);
+  }
+  .slot-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .slot-info { flex: 1; min-width: 0; }
+  .slot-time { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
+  .slot-task { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .slot-toggle {
+    width: 44px; height: 26px; border-radius: 999px; background: var(--border); position: relative;
+    flex-shrink: 0; transition: background 0.2s;
+  }
+  .slot-toggle.on { background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+  .slot-toggle .dot {
+    width: 20px; height: 20px; border-radius: 999px; background: #fff; position: absolute; top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .slot-toggle.on .dot { transform: translateX(18px); }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none;
+    align-items: flex-end; justify-content: center; z-index: 50;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--card); width: 100%; max-width: 580px; border-radius: 22px 22px 0 0;
+    padding: 22px 20px 30px; max-height: 88vh; overflow-y: auto;
+  }
+  .field-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 1.1px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 9px; font-weight: 600;
+  }
+  input[type="time"], input[type="text"] {
+    width: 100%; background: #0F0F1A; border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 13px 14px; color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; outline: none;
+  }
+  input[type="time"]:focus, input[type="text"]:focus { border-color: var(--gold); }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px);} to {opacity:1; transform:translateY(0);} }
+  .fade { animation: fadeIn 0.25s ease; }
+  .upload-box {
+    border: 2px dashed var(--border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer;
+    background: #0F0F1A;
+  }
+  .upload-box img { max-width: 100%; max-height: 160px; border-radius: 10px; }
+  #fullscreenReminder {
+    position: fixed; inset: 0; z-index: 100; display: none; background: #000;
+    background-size: cover; background-position: center;
+  }
+  #fullscreenReminder .overlay {
+    position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.85));
+    display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 24px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap" style="padding-top:30px; padding-bottom:18px; display:flex; align-items:center; gap:10px;">
+  <img src="/icon.png" width="40" height="40" style="border-radius:11px;" />
+  <div>
+    <div class="display grad-text" style="font-size:19px; font-weight:800;">Topper's Track</div>
+    <div style="color:var(--muted); font-size:11px;">Plan It. Track It. Top It.</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <button id="enableNotifBtn" class="btn-primary" style="margin-bottom:16px;">🔔 Notifications On Karo</button>
+  <p id="notifStatus" style="text-align:center; font-size:12px; color:var(--muted); margin:-10px 0 16px; display:none;"></p>
+
+  <div class="field-label" style="margin-bottom:10px;">Aaj Ke 10 Reminders</div>
+  <div id="slotsList"></div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-sheet">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div class="display" style="font-size:17px; font-weight:700;" id="modalTitle">Reminder Set Karo</div>
+      <button id="closeModalBtn" class="btn-secondary" style="padding:6px 12px;">✕</button>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div class="field-label">Time</div>
+      <input type="time" id="timeInput" />
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div class="field-label">Kis Kaam Ke Liye</div>
+      <div id="taskChips" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;"></div>
+      <input type="text" id="taskInput" placeholder="Ya khud likho (jaise: Maths Revision)" />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div class="field-label">Reminder Image</div>
+      <div id="uploadBox" class="upload-box">
+        <div id="uploadEmpty">
+          <div style="font-size:26px; margin-bottom:6px;">🖼️</div>
+          <div style="font-size:13px; font-weight:600;">Tap karke image chuno</div>
+        </div>
+        <img id="uploadPreview" style="display:none;" />
+      </div>
+      <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+    </div>
+
+    <button id="saveSlotBtn" class="btn-primary" style="margin-bottom:10px;">Save Karo</button>
+    <button id="deleteSlotBtn" class="btn-secondary" style="width:100%; color:var(--err); border-color:rgba(248,113,113,0.3);">Reminder Hatao</button>
+  </div>
+</div>
+
+<!-- FULLSCREEN REMINDER (shown when opened from notification) -->
+<div id="fullscreenReminder">
+  <div class="overlay">
+    <div class="mono" id="fsTime" style="font-size:14px; color:var(--gold2); margin-bottom:6px;"></div>
+    <div class="display" id="fsTask" style="font-size:28px; font-weight:800; color:#fff; margin-bottom:24px; line-height:1.25;"></div>
+    <button id="fsCloseBtn" class="btn-primary">Samajh Gaya 👍</button>
+  </div>
+</div>
+
+<script>
+const TASK_PRESETS = ["Study", "Play", "Rest", "TV", "Exercise", "Sleep", "Revision"];
+const VAPID_PUBLIC_KEY = "BL1NUcG61eO0wXS_9udk-8nzLNMmQt9_h8idKvA_1OjFRVniNYcLhI4okkAzq59oD003oADw-DgdFWwyp8qoqnc";
+
+const state = {
+  slots: [],
+  activeSlot: null,
+  pendingImageBase64: null,
+  pendingImageMime: null,
+};
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+// ---- Load reminders ----
+async function loadReminders() {
+  try {
+    const res = await fetch("/api/get-reminders");
+    const data = await res.json();
+    state.slots = data.reminders || [];
+  } catch (e) {
+    state.slots = [];
+  }
+  renderSlots();
+}
+
+function renderSlots() {
+  const list = document.getElementById("slotsList");
+  list.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    const slot = state.slots.find((s) => s.slot === i) || { slot: i, time: null, task: null, image_url: null, enabled: false };
+    const div = document.createElement("div");
+    div.className = "slot-card";
+    div.innerHTML = `
+      <div class="slot-thumb">${slot.image_url ? `<img src="${slot.image_url}" />` : "⏰"}</div>
+      <div class="slot-info">
+        <div class="slot-time">${slot.time || "-- : --"}</div>
+        <div class="slot-task">${slot.task || "Tap karke set karo"}</div>
+      </div>
+      <div class="slot-toggle ${slot.enabled ? "on" : ""}" data-slot="${i}"><div class="dot"></div></div>
+    `;
+    div.addEventListener("click", (e) => {
+      if (e.target.closest(".slot-toggle")) {
+        e.stopPropagation();
+        quickToggle(slot);
+      } else {
+        openModal(slot);
+      }
+    });
+    list.appendChild(div);
+  }
+}
+
+async function quickToggle(slot) {
+  const newEnabled = !slot.enabled;
+  await fetch("/api/save-reminder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slot: slot.slot, time: slot.time, task: slot.task, enabled: newEnabled }),
+  });
+  loadReminders();
+}
+
+// ---- Modal ----
+const modalOverlay = document.getElementById("modalOverlay");
+const timeInput = document.getElementById("timeInput");
+const taskInput = document.getElementById("taskInput");
+const taskChips = document.getElementById("taskChips");
+const uploadBox = document.getElementById("uploadBox");
+const uploadEmpty = document.getElementById("uploadEmpty");
+const uploadPreview = document.getElementById("uploadPreview");
+const imageInput = document.getElementById("imageInput");
+
+function renderTaskChips(selected) {
+  taskChips.innerHTML = "";
+  TASK_PRESETS.forEach((t) => {
+    const chip = document.createElement("button");
+    chip.className = "chip" + (taskInput.value === t ? " active" : "");
+    chip.textContent = t;
+    chip.addEventListener("click", () => {
+      taskInput.value = t;
+      renderTaskChips();
+    });
+    taskChips.appendChild(chip);
+  });
+}
+
+function openModal(slot) {
+  state.activeSlot = slot.slot;
+  state.pendingImageBase64 = null;
+  document.getElementById("modalTitle").textContent = `Reminder ${slot.slot}`;
+  timeInput.value = slot.time || "06:00";
+  taskInput.value = slot.task || "";
+  renderTaskChips();
+  if (slot.image_url) {
+    uploadPreview.src = slot.image_url;
+    uploadPreview.style.display = "block";
+    uploadEmpty.style.display = "none";
+  } else {
+    uploadPreview.style.display = "none";
+    uploadEmpty.style.display = "block";
+  }
+  modalOverlay.classList.add("open");
+}
+
+document.getElementById("closeModalBtn").addEventListener("click", () => modalOverlay.classList.remove("open"));
+taskInput.addEventListener("input", () => renderTaskChips());
+
+uploadBox.addEventListener("click", () => imageInput.click());
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { alert("Image 3MB se choti honi chahiye."); return; }
+  state.pendingImageMime = file.type;
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.pendingImageBase64 = reader.result.split(",")[1];
+    uploadPreview.src = reader.result;
+    uploadPreview.style.display = "block";
+    uploadEmpty.style.display = "none";
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("saveSlotBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("saveSlotBtn");
+  btn.disabled = true;
+  btn.textContent = "Save ho raha hai...";
+  try {
+    await fetch("/api/save-reminder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slot: state.activeSlot,
+        time: timeInput.value,
+        task: taskInput.value || "Reminder",
+        enabled: true,
+        imageBase64: state.pendingImageBase64,
+        imageMime: state.pendingImageMime,
+      }),
+    });
+    modalOverlay.classList.remove("open");
+    await loadReminders();
+  } catch (e) {
+    alert("Save nahi ho paaya, dobara try karo.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Karo";
+  }
+});
+
+document.getElementById("deleteSlotBtn").addEventListener("click", async () => {
+  await fetch("/api/save-reminder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slot: state.activeSlot, time: null, task: null, enabled: false, clearImage: true }),
+  });
+  modalOverlay.classList.remove("open");
+  loadReminders();
+});
+
+// ---- Push notification subscription ----
+const enableNotifBtn = document.getElementById("enableNotifBtn");
+const notifStatus = document.getElementById("notifStatus");
+
+enableNotifBtn.addEventListener("click", async () => {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    notifStatus.style.display = "block";
+    notifStatus.textContent = "Ye phone/browser notifications support nahi karta.";
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      notifStatus.style.display = "block";
+      notifStatus.textContent = "Permission allow nahi hui — Settings mein jaake allow karo.";
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    await fetch("/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sub),
+    });
+    enableNotifBtn.textContent = "✅ Notifications On Hain";
+    enableNotifBtn.disabled = true;
+  } catch (e) {
+    notifStatus.style.display = "block";
+    notifStatus.textContent = "Kuch gadbad hui, dobara try karo.";
+  }
+});
+
+// ---- Fullscreen reminder view (from notification tap) ----
+function checkFullscreenReminder() {
+  const params = new URLSearchParams(window.location.search);
+  const image = params.get("reminderImage");
+  const task = params.get("task");
+  const time = params.get("time");
+  if (image || task) {
+    const fs = document.getElementById("fullscreenReminder");
+    fs.style.backgroundImage = image ? `url('${image}')` : "none";
+    document.getElementById("fsTask").textContent = task || "Reminder!";
+    document.getElementById("fsTime").textContent = time || "";
+    fs.style.display = "block";
+  }
+}
+document.getElementById("fsCloseBtn").addEventListener("click", () => {
+  document.getElementById("fullscreenReminder").style.display = "none";
+  window.history.replaceState({}, "", "/");
+});
+
+checkFullscreenReminder();
+loadReminders();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+}
+</script>
+</body>
+</html>
