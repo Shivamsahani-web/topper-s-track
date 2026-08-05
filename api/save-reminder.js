@@ -31,6 +31,7 @@ export default async function handler(req, res) {
         {
           method: "POST",
           headers: {
+            apikey: SERVICE_KEY,
             Authorization: `Bearer ${SERVICE_KEY}`,
             "Content-Type": imageMime,
             "x-upsert": "true",
