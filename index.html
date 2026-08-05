@@ -303,7 +303,7 @@ document.getElementById("saveSlotBtn").addEventListener("click", async () => {
   btn.disabled = true;
   btn.textContent = "Save ho raha hai...";
   try {
-    await fetch("/api/save-reminder", {
+    const res = await fetch("/api/save-reminder", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -315,10 +315,17 @@ document.getElementById("saveSlotBtn").addEventListener("click", async () => {
         imageMime: state.pendingImageMime,
       }),
     });
-    modalOverlay.classList.remove("open");
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error("Save failed:", res.status, errBody);
+      throw new Error("Save failed with status " + res.status);
+    }
+    btn.textContent = "✅ Save Ho Gaya!";
     await loadReminders();
+    await new Promise((r) => setTimeout(r, 700));
+    modalOverlay.classList.remove("open");
   } catch (e) {
-    alert("Save nahi ho paaya, dobara try karo.");
+    alert("Save nahi ho paaya, dobara try karo. (Error: " + e.message + ")");
   } finally {
     btn.disabled = false;
     btn.textContent = "Save Karo";
