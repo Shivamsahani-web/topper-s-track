@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -99,15 +100,25 @@
   .upload-box img { max-width: 100%; max-height: 160px; border-radius: 10px; }
   #fullscreenReminder {
     position: fixed; inset: 0; z-index: 100; display: none; background: #000;
-    background-size: cover; background-position: center;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
   }
   #fullscreenReminder .overlay {
-    position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.85));
+    position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.75));
     display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 24px;
   }
+  html.fs-mode .wrap { display: none !important; }
+  html.fs-mode .modal-overlay { display: none !important; }
 </style>
 </head>
 <body>
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("reminderImage") || params.get("task")) {
+      document.documentElement.classList.add("fs-mode");
+    }
+  })();
+</script>
 
 <div class="wrap" style="padding-top:30px; padding-bottom:18px; display:flex; align-items:center; gap:10px;">
   <img src="/icon.png" width="40" height="40" style="border-radius:11px;" />
@@ -396,6 +407,7 @@ function checkFullscreenReminder() {
 }
 document.getElementById("fsCloseBtn").addEventListener("click", () => {
   document.getElementById("fullscreenReminder").style.display = "none";
+  document.documentElement.classList.remove("fs-mode");
   window.history.replaceState({}, "", "/");
 });
 
